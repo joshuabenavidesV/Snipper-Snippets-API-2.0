@@ -38,25 +38,5 @@
     "id": 8,
     "language": "Java",
     "code": "public class Rectangle {\n    private int width;\n    private int height;\n\n    public Rectangle(int width, int height) {\n        this.width = width;\n        this.height = height;\n    }\n\n    public int getArea() {\n        return width * height;\n    }\n}"
-  },
-  {
-    "id": 9,
-    "language": "Python",
-    "code": "Hello"
-  },
-  {
-    "id": 10,
-    "language": "Python",
-    "code": "Hello"
-  },
-  {
-    "id": 11,
-    "language": "Python",
-    "code": "Hello"
-  },
-  {
-    "id": 12,
-    "language": "Python",
-    "code": "Hello"
   }
 ]
