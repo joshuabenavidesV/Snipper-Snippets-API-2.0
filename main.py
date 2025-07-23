@@ -2,9 +2,33 @@ from fastapi import FastAPI
 import json
 from pydantic import BaseModel
 from typing import Optional
+from cryptography.fernet import Fernet
+import os
 
 
 app = FastAPI()
+
+key_file_path = "secret.key"
+if not os.path.exists(key_file_path):
+    key = Fernet.generate_key()
+    with open(key_file_path, "wb") as key_file:
+        key_file.write(key)
+else:
+    with open(key_file_path, "rb") as key_file:
+        key = key_file.read()
+
+fernet = Fernet(key)
+
+def decrypt_snippet(snippet):
+    try:
+        decrypted_code = fernet.decrypt(snippet["code"].encode()).decode()
+    except Exception:
+        decrypted_code = snippet["code"]  # fallback to plain text if not encrypted
+    return {
+        "id": snippet["id"],
+        "language": snippet["language"],
+        "code": decrypted_code
+    }
 
 def load_data():
     seed_Data = "seedData.json"
@@ -25,41 +49,30 @@ class Snippet(BaseModel):
 
 @app.get("/snippets")
 def get_all_snippets(lang: Optional[str] = None):
-    # If the user provided a language filter in the URL
+    
     language = lang
     if language is not None:
-        # Create a new list to store matching snippets
-        filtered_snippets = []
-
-        # Go through each snippet in the data list
-        for snippet in data:
-            # Get the language from the snippet (default to empty string if missing)
-            snippet_language = snippet.get("language", "")
-
-            # Compare it to the user's input (case-insensitive)
-            if snippet_language.lower() == language.lower():
-                # If it matches, add this snippet to the results list
-                filtered_snippets.append(snippet)
-
-        # Return the filtered list
-        return filtered_snippets
-
-    # If no language filter was provided, return all snippets
-    return data
+        return [
+            decrypt_snippet(snippet)
+            for snippet in data
+            if snippet.get("language", "").lower() == lang.lower()
+        ]
+    return [decrypt_snippet(snippet) for snippet in data]
 
 @app.get("/snippets/{snippet_id}")
 def get_snippets_id(snippet_id: int):
     for snippet in data:
         if snippet.get("id") == snippet_id:
-            return snippet
+            return decrypt_snippet(snippet)
     return {"error": "Snippet not found"}
 
 @app.post("/snippets")
 def create_snippet(snippet: Snippet):
+    encrypted_code = fernet.encrypt(snippet.code.encode()).decode()  # decode to string for JSON
     new_snippet = {
         "id": len(data) + 1,
         "language": snippet.language,
-        "code": snippet.code,
+        "code": encrypted_code,
     }
     data.append(new_snippet)
     save_data(data)
