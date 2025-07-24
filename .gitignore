@@ -4,3 +4,10 @@ __pycache__/
 *.pyo
 secret.key*
 data.json
+.env
+*.db
+*.env
+users.json
+*.sqlite3
+users.json*
+data.json*
